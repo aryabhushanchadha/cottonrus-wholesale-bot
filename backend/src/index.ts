@@ -1,4 +1,6 @@
 import "./utils/bigintJson";
+import path from "path";
+import fs from "fs";
 import express from "express";
 import cors from "cors";
 import { env } from "./config/env";
@@ -18,6 +20,18 @@ app.use((req, res, next) => {
 
 app.get("/health", (_req, res) => res.json({ status: "ok" }));
 app.use("/api", apiRouter);
+
+// In production the frontend is built alongside the backend and served from
+// the same origin/service, so the Mini App and its API share one URL and
+// don't need CORS or cross-service configuration. Locally the frontend runs
+// on its own Vite dev server instead, so this directory won't exist.
+const frontendDist = path.resolve(__dirname, "../../frontend/dist");
+if (fs.existsSync(frontendDist)) {
+  app.use(express.static(frontendDist));
+  app.get(/^\/(?!api|health).*/, (_req, res) => {
+    res.sendFile(path.join(frontendDist, "index.html"));
+  });
+}
 
 app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error(err);
