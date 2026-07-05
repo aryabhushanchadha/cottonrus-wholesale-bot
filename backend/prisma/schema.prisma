@@ -1,0 +1,154 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Language {
+  EN
+  RU
+}
+
+enum Color {
+  BLACK
+  WHITE
+}
+
+enum OrderStatus {
+  NEW // order placed, awaiting payment
+  PAID // payment confirmed
+  PROCESSING // in production / packing
+  SHIPPED // handed to courier
+  DELIVERED // received by customer
+  CANCELLED
+}
+
+enum PaymentProvider {
+  STRIPE
+  YOOKASSA
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+  REFUNDED
+}
+
+// A wholesale buyer. One record per Telegram user.
+model Customer {
+  id             String   @id @default(uuid())
+  customerCode   String   @unique // human-facing Customer ID, e.g. WC-100234
+  telegramId     BigInt   @unique
+  telegramUsername String?
+  fullName       String?
+  companyName    String?
+  phone          String?
+  email          String?
+  language       Language @default(EN)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  orders Order[]
+}
+
+// A t-shirt product line (premium 100% cotton wholesale tee).
+model Product {
+  id          String   @id @default(uuid())
+  slug        String   @unique
+  nameEn      String
+  nameRu      String
+  descriptionEn String
+  descriptionRu String
+  material    String   @default("100% Cotton")
+  gsm         Int      @default(220) // fabric weight, premium heavyweight cotton
+  fitEn       String   @default("Regular / Classic Fit")
+  fitRu       String   @default("Классический крой")
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  variants ProductVariant[]
+}
+
+// One buyable SKU = product x size x color, with wholesale pricing/stock.
+model ProductVariant {
+  id         String  @id @default(uuid())
+  productId  String
+  product    Product @relation(fields: [productId], references: [id])
+  size       Int // 46,48,50,52,54,56
+  color      Color
+  sku        String  @unique
+  priceMinor Int // price per unit in minor currency units (cents/kopecks)
+  currency   String  @default("USD")
+  minOrderQty Int    @default(10) // wholesale minimum per SKU
+  stockQty   Int     @default(0)
+
+  orderItems OrderItem[]
+
+  @@unique([productId, size, color])
+}
+
+model Order {
+  id           String      @id @default(uuid())
+  orderNumber  String      @unique // e.g. ORD-2026-000123
+  customerId   String
+  customer     Customer    @relation(fields: [customerId], references: [id])
+  status       OrderStatus @default(NEW)
+  currency     String      @default("USD")
+  subtotalMinor Int
+  totalMinor   Int
+  notes        String?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  items    OrderItem[]
+  payments Payment[]
+  invoice  Invoice?
+  statusHistory OrderStatusEvent[]
+}
+
+model OrderItem {
+  id              String         @id @default(uuid())
+  orderId         String
+  order           Order          @relation(fields: [orderId], references: [id])
+  productVariantId String
+  productVariant  ProductVariant @relation(fields: [productVariantId], references: [id])
+  quantity        Int
+  unitPriceMinor  Int
+  lineTotalMinor  Int
+}
+
+model OrderStatusEvent {
+  id        String      @id @default(uuid())
+  orderId   String
+  order     Order       @relation(fields: [orderId], references: [id])
+  status    OrderStatus
+  note      String?
+  createdAt DateTime    @default(now())
+}
+
+model Payment {
+  id             String          @id @default(uuid())
+  orderId        String
+  order          Order           @relation(fields: [orderId], references: [id])
+  provider       PaymentProvider
+  providerRef    String? // Stripe session/PI id or YooKassa payment id
+  status         PaymentStatus   @default(PENDING)
+  amountMinor    Int
+  currency       String
+  confirmationUrl String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+}
+
+model Invoice {
+  id          String   @id @default(uuid())
+  orderId     String   @unique
+  order       Order    @relation(fields: [orderId], references: [id])
+  invoiceNumber String @unique
+  pdfPath     String
+  issuedAt    DateTime @default(now())
+}
