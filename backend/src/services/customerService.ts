@@ -42,7 +42,14 @@ export async function setCustomerLanguage(telegramId: bigint, language: Language
 
 export async function updateCustomerProfile(
   customerId: string,
-  data: { fullName?: string; companyName?: string; phone?: string; email?: string }
+  data: {
+    fullName?: string;
+    companyName?: string;
+    inn?: string;
+    address?: string;
+    phone?: string;
+    email?: string;
+  }
 ) {
   return prisma.customer.update({ where: { id: customerId }, data });
 }

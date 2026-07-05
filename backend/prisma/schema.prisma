@@ -46,6 +46,8 @@ model Customer {
   telegramUsername String?
   fullName       String?
   companyName    String?
+  inn            String? // buyer's tax ID, required on the invoice
+  address        String? // legal/shipping address, required on the invoice
   phone          String?
   email          String?
   language       Language @default(EN)
@@ -64,9 +66,10 @@ model Product {
   descriptionEn String
   descriptionRu String
   material    String   @default("100% Cotton")
-  gsm         Int      @default(220) // fabric weight, premium heavyweight cotton
+  gsm         Int      @default(220) // fabric weight (180 = classic, 200 = oversize)
   fitEn       String   @default("Regular / Classic Fit")
   fitRu       String   @default("Классический крой")
+  images      String[] @default([]) // product photo URLs/paths shown on the catalog page
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
 
@@ -81,8 +84,8 @@ model ProductVariant {
   size       Int // 46,48,50,52,54,56
   color      Color
   sku        String  @unique
-  priceMinor Int // price per unit in minor currency units (cents/kopecks)
-  currency   String  @default("USD")
+  priceMinor Int // price per unit, EXCLUDING VAT, in minor currency units (kopecks)
+  currency   String  @default("RUB")
   minOrderQty Int    @default(10) // wholesale minimum per SKU
   stockQty   Int     @default(0)
 
@@ -97,9 +100,11 @@ model Order {
   customerId   String
   customer     Customer    @relation(fields: [customerId], references: [id])
   status       OrderStatus @default(NEW)
-  currency     String      @default("USD")
-  subtotalMinor Int
-  totalMinor   Int
+  currency     String      @default("RUB")
+  subtotalMinor Int // sum of line items, EXCLUDING VAT
+  vatRateBps   Int         @default(2000) // VAT rate in basis points (2000 = 20%)
+  vatMinor     Int         @default(0) // VAT amount
+  totalMinor   Int // subtotalMinor + vatMinor
   notes        String?
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt

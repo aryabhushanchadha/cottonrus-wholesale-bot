@@ -42,6 +42,7 @@ export interface Product {
   gsm: number;
   fitEn: string;
   fitRu: string;
+  images: string[];
   variants: ProductVariant[];
 }
 
@@ -50,6 +51,8 @@ export interface Customer {
   customerCode: string;
   fullName?: string;
   companyName?: string;
+  inn?: string;
+  address?: string;
   phone?: string;
   email?: string;
   language: "EN" | "RU";
@@ -71,6 +74,8 @@ export interface Order {
   status: OrderStatus;
   currency: string;
   subtotalMinor: number;
+  vatRateBps: number;
+  vatMinor: number;
   totalMinor: number;
   createdAt: string;
   items: OrderItem[];
@@ -81,8 +86,9 @@ export interface Order {
 export const api = {
   getProducts: () => request<Product[]>("/products"),
   getMe: () => request<Customer>("/customers/me"),
-  updateMe: (data: Partial<Pick<Customer, "fullName" | "companyName" | "phone" | "email">>) =>
-    request<Customer>("/customers/me", { method: "PATCH", body: JSON.stringify(data) }),
+  updateMe: (
+    data: Partial<Pick<Customer, "fullName" | "companyName" | "inn" | "address" | "phone" | "email">>
+  ) => request<Customer>("/customers/me", { method: "PATCH", body: JSON.stringify(data) }),
   getOrders: () => request<Order[]>("/orders"),
   getOrder: (id: string) => request<Order>(`/orders/${id}`),
   createOrder: (items: { productVariantId: string; quantity: number }[], notes?: string) =>

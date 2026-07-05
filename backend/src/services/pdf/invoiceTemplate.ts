@@ -1,4 +1,3 @@
-import PDFDocument from "pdfkit";
 import type { Order, OrderItem, ProductVariant, Product, Customer } from "@prisma/client";
 import { env } from "../../config/env";
 
@@ -7,84 +6,94 @@ type FullOrder = Order & {
   items: (OrderItem & { productVariant: ProductVariant & { product: Product } })[];
 };
 
-function money(minor: number, currency: string) {
-  return `${(minor / 100).toFixed(2)} ${currency}`;
+function money(minor: number) {
+  return (minor / 100).toLocaleString("ru-RU", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-// Bilingual (EN / RU) premium wholesale invoice.
-export function renderInvoicePdf(
-  doc: PDFKit.PDFDocument,
-  order: FullOrder,
-  invoiceNumber: string
-) {
-  const c = env.company;
+function formatDate(date: Date) {
+  return date.toLocaleDateString("ru-RU", { day: "2-digit", month: "2-digit", year: "numeric" });
+}
 
-  doc.fontSize(20).text("INVOICE / СЧЁТ-ФАКТУРА", { align: "left" });
-  doc.moveDown(0.3);
-  doc.fontSize(10).fillColor("#555").text(`${invoiceNumber}`);
+const COLOR_LABEL: Record<string, string> = { BLACK: "Чёрный", WHITE: "Белый" };
+
+// Structured Russian "Счёт на оплату" (invoice for payment), including full
+// seller and buyer requisites (both parties' INN are legally expected on a
+// wholesale B2B invoice) and a VAT breakdown.
+export function renderInvoicePdf(doc: PDFKit.PDFDocument, order: FullOrder, invoiceNumber: string, sequence: number) {
+  const c = env.company;
+  const buyer = order.customer;
+
+  doc.fontSize(16).text(`Счёт на оплату № ${sequence} от ${formatDate(order.createdAt)}`, { align: "left" });
+  doc.fontSize(9).fillColor("#777").text(`${invoiceNumber} · Invoice`);
   doc.fillColor("#000");
   doc.moveDown(1);
 
-  doc.fontSize(11).text(`${c.name}`);
-  if (c.address) doc.text(c.address);
-  if (c.email) doc.text(`Email: ${c.email}`);
-  if (c.inn) doc.text(`INN/ИНН: ${c.inn}`);
+  // --- Seller (Поставщик) ---
+  doc.fontSize(11).font("Bold").text("Поставщик:");
+  doc.font("Body").fontSize(10);
+  doc.text(`${c.name}, ИНН ${c.inn}`);
+  doc.text(`Р/с ${c.bankAccount} в ${c.bankName}`);
+  doc.text(`БИК ${c.bik}, к/с ${c.correspondentAccount}`);
+  doc.text(`Email: ${c.email}   Telegram: ${c.telegram}`);
+  doc.moveDown(0.8);
+
+  // --- Buyer (Покупатель) ---
+  doc.font("Bold").fontSize(11).text("Покупатель:");
+  doc.font("Body").fontSize(10);
+  doc.text(buyer.companyName || buyer.fullName || "—");
+  doc.text(`ИНН: ${buyer.inn ?? "—"}`);
+  doc.text(`Адрес: ${buyer.address ?? "—"}`);
+  if (buyer.phone) doc.text(`Телефон: ${buyer.phone}`);
+  if (buyer.email) doc.text(`Email: ${buyer.email}`);
+  doc.text(`ID клиента: ${buyer.customerCode}`);
   doc.moveDown(1);
 
-  doc.fontSize(12).text("Bill To / Плательщик:", { underline: true });
-  doc.fontSize(11).text(order.customer.companyName || order.customer.fullName || "—");
-  doc.text(`Customer ID / ID клиента: ${order.customer.customerCode}`);
-  if (order.customer.email) doc.text(`Email: ${order.customer.email}`);
-  if (order.customer.phone) doc.text(`Phone/Телефон: ${order.customer.phone}`);
-  doc.moveDown(1);
-
-  doc.fontSize(11).text(`Order / Заказ: ${order.orderNumber}`);
-  doc.text(`Date / Дата: ${order.createdAt.toISOString().slice(0, 10)}`);
-  doc.text(`Status / Статус: ${order.status}`);
-  doc.moveDown(1);
-
+  // --- Line items table ---
+  const colX = { num: 40, desc: 65, qty: 330, unit: 370, price: 415, total: 490 };
   const tableTop = doc.y;
-  const colX = { desc: 40, size: 250, color: 310, qty: 380, price: 430, total: 500 };
 
-  doc.fontSize(10).fillColor("#555");
-  doc.text("Item / Товар", colX.desc, tableTop);
-  doc.text("Size/Размер", colX.size, tableTop);
-  doc.text("Color/Цвет", colX.color, tableTop);
-  doc.text("Qty/Кол-во", colX.qty, tableTop);
-  doc.text("Price/Цена", colX.price, tableTop);
-  doc.text("Total/Итог", colX.total, tableTop);
+  doc.font("Bold").fontSize(9).fillColor("#555");
+  doc.text("№", colX.num, tableTop);
+  doc.text("Наименование товара", colX.desc, tableTop);
+  doc.text("Кол-во", colX.qty, tableTop);
+  doc.text("Ед.", colX.unit, tableTop);
+  doc.text("Цена", colX.price, tableTop);
+  doc.text("Сумма", colX.total, tableTop);
   doc.fillColor("#000");
   doc.moveDown(0.5);
   doc.moveTo(40, doc.y).lineTo(555, doc.y).strokeColor("#ccc").stroke();
   doc.moveDown(0.3);
 
-  for (const item of order.items) {
+  order.items.forEach((item, idx) => {
     const y = doc.y;
     const v = item.productVariant;
-    doc.fontSize(10);
-    doc.text(v.product.nameEn, colX.desc, y, { width: 200 });
-    doc.text(String(v.size), colX.size, y);
-    doc.text(v.color === "BLACK" ? "Black/Чёрный" : "White/Белый", colX.color, y);
+    const name = `${v.product.nameRu}, ${COLOR_LABEL[v.color]}, размер ${v.size}`;
+    doc.font("Body").fontSize(9);
+    doc.text(String(idx + 1), colX.num, y);
+    doc.text(name, colX.desc, y, { width: 260 });
     doc.text(String(item.quantity), colX.qty, y);
-    doc.text(money(item.unitPriceMinor, order.currency), colX.price, y);
-    doc.text(money(item.lineTotalMinor, order.currency), colX.total, y);
+    doc.text("шт", colX.unit, y);
+    doc.text(money(item.unitPriceMinor), colX.price, y);
+    doc.text(money(item.lineTotalMinor), colX.total, y);
     doc.moveDown(1);
-  }
+  });
 
   doc.moveTo(40, doc.y).lineTo(555, doc.y).strokeColor("#ccc").stroke();
-  doc.moveDown(0.5);
+  doc.moveDown(0.6);
 
-  doc.fontSize(11).text(`Subtotal / Промежуточный итог: ${money(order.subtotalMinor, order.currency)}`, {
-    align: "right",
-  });
-  doc
-    .fontSize(13)
-    .text(`Total / Итого к оплате: ${money(order.totalMinor, order.currency)}`, { align: "right" });
+  // --- Totals with VAT breakdown ---
+  const vatPercent = (order.vatRateBps / 100).toFixed(0);
+  doc.font("Body").fontSize(10);
+  doc.text(`Итого без НДС: ${money(order.subtotalMinor)} ${order.currency}`, { align: "right" });
+  doc.text(`В т.ч. НДС (${vatPercent}%): ${money(order.vatMinor)} ${order.currency}`, { align: "right" });
+  doc.font("Bold").fontSize(13);
+  doc.text(`Итого к оплате: ${money(order.totalMinor)} ${order.currency}`, { align: "right" });
+  doc.font("Body");
 
   doc.moveDown(2);
-  doc.fontSize(9).fillColor("#777");
+  doc.fontSize(8).fillColor("#777");
   doc.text(
-    "Product spec / Спецификация товара: 100% Cotton, 220 GSM premium heavyweight, reinforced seams. " +
-      "Wholesale only. / 100% хлопок, плотность 220 г/м², премиальное качество, усиленные швы. Только оптовая продажа."
+    `Всего наименований ${order.items.length}, на сумму ${money(order.totalMinor)} ${order.currency}. ` +
+      "Товар: 100% хлопок, премиальное качество. Оптовая продажа."
   );
 }

@@ -5,6 +5,8 @@ import { useCart } from "../context/CartContext";
 import { useLanguage } from "../i18n/LanguageContext";
 import { getTelegramWebApp } from "../telegram";
 
+const VAT_RATE = 0.2; // must match backend VAT_RATE_BPS; shown here for a live estimate only
+
 function formatPrice(minor: number, currency: string) {
   return `${(minor / 100).toFixed(2)} ${currency}`;
 }
@@ -15,7 +17,14 @@ export function Checkout() {
   const navigate = useNavigate();
 
   const [customer, setCustomer] = useState<Customer | null>(null);
-  const [form, setForm] = useState({ companyName: "", fullName: "", phone: "", email: "" });
+  const [form, setForm] = useState({
+    companyName: "",
+    fullName: "",
+    inn: "",
+    address: "",
+    phone: "",
+    email: "",
+  });
   const [notes, setNotes] = useState("");
   const [order, setOrder] = useState<Order | null>(null);
   const [busy, setBusy] = useState(false);
@@ -27,6 +36,8 @@ export function Checkout() {
       setForm({
         companyName: me.companyName ?? "",
         fullName: me.fullName ?? "",
+        inn: me.inn ?? "",
+        address: me.address ?? "",
         phone: me.phone ?? "",
         email: me.email ?? "",
       });
@@ -43,7 +54,9 @@ export function Checkout() {
     return null;
   }
 
-  const currency = lines[0]?.variant.currency ?? "USD";
+  const currency = lines[0]?.variant.currency ?? "RUB";
+  const vatMinor = Math.round(subtotalMinor * VAT_RATE);
+  const totalMinor = subtotalMinor + vatMinor;
 
   const handlePlaceOrder = async () => {
     setBusy(true);
@@ -101,6 +114,14 @@ export function Checkout() {
             <input value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} />
           </div>
           <div className="form-field">
+            <label>{t.checkout.inn}</label>
+            <input value={form.inn} onChange={(e) => setForm({ ...form, inn: e.target.value })} />
+          </div>
+          <div className="form-field">
+            <label>{t.checkout.address}</label>
+            <input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
+          </div>
+          <div className="form-field">
             <label>{t.checkout.phone}</label>
             <input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
           </div>
@@ -113,9 +134,19 @@ export function Checkout() {
             <textarea rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} />
           </div>
 
+          <p className="muted">{t.checkout.requisitesRequired}</p>
+
+          <div className="summary-row">
+            <span>{t.cart.subtotal}</span>
+            <span>{formatPrice(subtotalMinor, currency)}</span>
+          </div>
+          <div className="summary-row">
+            <span>{t.cart.vat} (20%)</span>
+            <span>{formatPrice(vatMinor, currency)}</span>
+          </div>
           <div className="summary-row total">
             <span>{t.cart.total}</span>
-            <span>{formatPrice(subtotalMinor, currency)}</span>
+            <span>{formatPrice(totalMinor, currency)}</span>
           </div>
 
           {error && <p className="muted">{error}</p>}

@@ -1,6 +1,7 @@
 import { OrderStatus } from "@prisma/client";
 import { prisma } from "../db/prisma";
 import { generateOrderNumber } from "../utils/ids";
+import { env } from "../config/env";
 
 export class OrderValidationError extends Error {}
 
@@ -11,6 +12,13 @@ export async function createOrder(params: {
 }) {
   if (params.items.length === 0) {
     throw new OrderValidationError("Order must contain at least one item");
+  }
+
+  const customer = await prisma.customer.findUniqueOrThrow({ where: { id: params.customerId } });
+  if (!customer.inn || !customer.address) {
+    throw new OrderValidationError(
+      "Please add your company INN and address in your profile before placing an order (required for the invoice)"
+    );
   }
 
   const variantIds = params.items.map((i) => i.productVariantId);
@@ -58,7 +66,9 @@ export async function createOrder(params: {
     });
   }
 
-  const totalMinor = subtotalMinor; // no taxes/shipping modeled in this MVP
+  const vatRateBps = env.vatRateBps;
+  const vatMinor = Math.round((subtotalMinor * vatRateBps) / 10000);
+  const totalMinor = subtotalMinor + vatMinor;
 
   const order = await prisma.$transaction(async (tx) => {
     const count = await tx.order.count();
@@ -70,6 +80,8 @@ export async function createOrder(params: {
         customerId: params.customerId,
         currency: currency!,
         subtotalMinor,
+        vatRateBps,
+        vatMinor,
         totalMinor,
         notes: params.notes,
         items: { create: lineItems },

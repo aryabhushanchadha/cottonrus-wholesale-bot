@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { api, Product, ProductVariant } from "../api/client";
 import { useLanguage } from "../i18n/LanguageContext";
 import { useCart } from "../context/CartContext";
+import { SizeChartButton } from "../components/SizeChart";
 
 function formatPrice(minor: number, currency: string) {
   return `${(minor / 100).toFixed(2)} ${currency}`;
@@ -37,13 +38,20 @@ function ProductCard({ product }: { product: Product }) {
 
   return (
     <div className="product-card">
+      {product.images.length > 0 && (
+        <div className="product-gallery">
+          {product.images.map((src) => (
+            <img key={src} src={src} alt={name} className="product-photo" />
+          ))}
+        </div>
+      )}
       <h2>{name}</h2>
       <p className="muted" style={{ marginBottom: 10 }}>
         {description}
       </p>
       <div className="product-meta">
         <span>
-          {t.catalog.material}: {product.material}, {product.gsm} GSM
+          {t.catalog.material} · {t.catalog.gsm}: {product.gsm} GSM
         </span>
       </div>
       <div className="product-meta">
@@ -135,6 +143,7 @@ export function Catalog() {
     <div className="content">
       <h2 style={{ margin: "0 0 4px" }}>{t.catalog.title}</h2>
       <p className="subtitle">{t.catalog.subtitle}</p>
+      <SizeChartButton />
       {loading && <p className="muted">Loading…</p>}
       {error && <p className="muted">{error}</p>}
       {products.map((p) => (

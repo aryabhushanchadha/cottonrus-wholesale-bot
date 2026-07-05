@@ -13,6 +13,44 @@ function authHeader() {
   return `Basic ${token}`;
 }
 
+// 54-FZ VAT codes: 1 = no VAT, 2 = 0%, 3 = 10%, 4 = 20%, 5 = 10/110, 6 = 20/120.
+const VAT_CODE_20_PERCENT = 4;
+
+function buildReceipt(order: NonNullable<Awaited<ReturnType<typeof getOrderById>>>) {
+  const contact = order.customer.email
+    ? { email: order.customer.email }
+    : order.customer.phone
+      ? { phone: order.customer.phone }
+      : null;
+  // A fiscal receipt requires a customer contact; skip it rather than fail
+  // the payment if neither was provided.
+  if (!contact) return undefined;
+
+  const lines = order.items.map((item) => ({
+    quantity: item.quantity,
+    inclVatMinor: Math.round((item.lineTotalMinor * (10000 + order.vatRateBps)) / 10000),
+    description: `${item.productVariant.product.nameRu}, ${item.productVariant.size}, ${
+      item.productVariant.color === "BLACK" ? "чёрный" : "белый"
+    }`.slice(0, 128),
+  }));
+  // Reconcile rounding so the receipt total matches the payment amount exactly.
+  const roundedSum = lines.reduce((sum, l) => sum + l.inclVatMinor, 0);
+  const diff = order.totalMinor - roundedSum;
+  if (diff !== 0) lines[lines.length - 1].inclVatMinor += diff;
+
+  return {
+    customer: contact,
+    items: lines.map((l) => ({
+      description: l.description,
+      quantity: String(l.quantity),
+      amount: { value: (l.inclVatMinor / 100).toFixed(2), currency: order.currency },
+      vat_code: VAT_CODE_20_PERCENT,
+      payment_subject: "commodity",
+      payment_mode: "full_payment",
+    })),
+  };
+}
+
 export async function createYooKassaPayment(orderId: string) {
   if (!env.yookassaShopId || !env.yookassaSecretKey) {
     throw new Error("YooKassa is not configured (YOOKASSA_SHOP_ID/SECRET_KEY missing)");
@@ -39,6 +77,7 @@ export async function createYooKassaPayment(orderId: string) {
       },
       description: `Wholesale order ${order.orderNumber}`,
       metadata: { orderId: order.id, orderNumber: order.orderNumber },
+      receipt: buildReceipt(order),
     }),
   });
 

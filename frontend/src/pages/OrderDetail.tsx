@@ -56,6 +56,16 @@ export function OrderDetail() {
             </div>
           );
         })}
+        <div className="summary-row">
+          <span>{t.cart.subtotal}</span>
+          <span>{formatPrice(order.subtotalMinor, order.currency)}</span>
+        </div>
+        <div className="summary-row">
+          <span>
+            {t.cart.vat} ({(order.vatRateBps / 100).toFixed(0)}%)
+          </span>
+          <span>{formatPrice(order.vatMinor, order.currency)}</span>
+        </div>
         <div className="summary-row total">
           <span>{t.orders.total}</span>
           <span>{formatPrice(order.totalMinor, order.currency)}</span>

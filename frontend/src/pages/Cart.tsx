@@ -2,6 +2,8 @@ import { useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import { useLanguage } from "../i18n/LanguageContext";
 
+const VAT_RATE = 0.2; // must match backend VAT_RATE_BPS; shown here for a live estimate only
+
 function formatPrice(minor: number, currency: string) {
   return `${(minor / 100).toFixed(2)} ${currency}`;
 }
@@ -10,7 +12,9 @@ export function Cart() {
   const { lines, removeLine, updateQuantity, subtotalMinor } = useCart();
   const { lang, t } = useLanguage();
   const navigate = useNavigate();
-  const currency = lines[0]?.variant.currency ?? "USD";
+  const currency = lines[0]?.variant.currency ?? "RUB";
+  const vatMinor = Math.round(subtotalMinor * VAT_RATE);
+  const totalMinor = subtotalMinor + vatMinor;
 
   if (lines.length === 0) {
     return (
@@ -53,9 +57,17 @@ export function Cart() {
         );
       })}
 
+      <div className="summary-row">
+        <span>{t.cart.subtotal}</span>
+        <span>{formatPrice(subtotalMinor, currency)}</span>
+      </div>
+      <div className="summary-row">
+        <span>{t.cart.vat} (20%)</span>
+        <span>{formatPrice(vatMinor, currency)}</span>
+      </div>
       <div className="summary-row total">
         <span>{t.cart.total}</span>
-        <span>{formatPrice(subtotalMinor, currency)}</span>
+        <span>{formatPrice(totalMinor, currency)}</span>
       </div>
 
       <button className="btn" style={{ marginTop: 16 }} onClick={() => navigate("/checkout")}>

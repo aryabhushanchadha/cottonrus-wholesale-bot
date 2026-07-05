@@ -5,7 +5,14 @@ import { useLanguage } from "../i18n/LanguageContext";
 export function Profile() {
   const { t } = useLanguage();
   const [customer, setCustomer] = useState<Customer | null>(null);
-  const [form, setForm] = useState({ companyName: "", fullName: "", phone: "", email: "" });
+  const [form, setForm] = useState({
+    companyName: "",
+    fullName: "",
+    inn: "",
+    address: "",
+    phone: "",
+    email: "",
+  });
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
@@ -14,6 +21,8 @@ export function Profile() {
       setForm({
         companyName: me.companyName ?? "",
         fullName: me.fullName ?? "",
+        inn: me.inn ?? "",
+        address: me.address ?? "",
         phone: me.phone ?? "",
         email: me.email ?? "",
       });
@@ -42,6 +51,14 @@ export function Profile() {
       <div className="form-field">
         <label>{t.checkout.contactName}</label>
         <input value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} />
+      </div>
+      <div className="form-field">
+        <label>{t.checkout.inn}</label>
+        <input value={form.inn} onChange={(e) => setForm({ ...form, inn: e.target.value })} />
+      </div>
+      <div className="form-field">
+        <label>{t.checkout.address}</label>
+        <input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
       </div>
       <div className="form-field">
         <label>{t.checkout.phone}</label>

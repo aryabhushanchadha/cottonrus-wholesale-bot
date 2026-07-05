@@ -37,10 +37,16 @@ export const env = {
     process.env.YOOKASSA_RETURN_URL ??
     (platformUrl ? `${platformUrl}/checkout/success` : "http://localhost:5183/checkout/success"),
 
+  vatRateBps: Number(process.env.VAT_RATE_BPS ?? 2000), // 2000 = 20% (standard Russian VAT)
+
   company: {
-    name: process.env.COMPANY_NAME ?? "Premium Cotton Wholesale Ltd.",
-    address: process.env.COMPANY_ADDRESS ?? "",
-    email: process.env.COMPANY_EMAIL ?? "",
-    inn: process.env.COMPANY_INN ?? "",
+    name: process.env.COMPANY_NAME ?? 'ООО "БЛЮ КРАУН"',
+    inn: process.env.COMPANY_INN ?? "7751389400",
+    email: process.env.COMPANY_EMAIL ?? "Blue.crown@mail.ru",
+    telegram: process.env.COMPANY_TELEGRAM ?? "@bluecrownllc",
+    bankAccount: process.env.COMPANY_BANK_ACCOUNT ?? "40702810581240000410",
+    bik: process.env.COMPANY_BIK ?? "044525593",
+    bankName: process.env.COMPANY_BANK_NAME ?? 'АО "АЛЬФА-БАНК"',
+    correspondentAccount: process.env.COMPANY_CORR_ACCOUNT ?? "30101810200000000593",
   },
 };

@@ -24,14 +24,24 @@ export async function generateInvoiceForOrder(orderId: string) {
   });
 
   const count = await prisma.invoice.count();
-  const invoiceNumber = generateInvoiceNumber(count + 1);
+  const sequence = count + 1;
+  const invoiceNumber = generateInvoiceNumber(sequence);
   const fileName = `${invoiceNumber}.pdf`;
   const filePath = path.join(INVOICES_DIR, fileName);
 
   const doc = new PDFDocument({ margin: 40, size: "A4" });
+  // pdfkit's built-in fonts only cover Latin (WinAnsi) text; the invoice is
+  // primarily Russian, so a Unicode TTF with Cyrillic glyphs is required.
+  // Registered under new names rather than "Helvetica"/"Helvetica-Bold":
+  // pdfkit instantiates its default standard Helvetica font in the
+  // PDFDocument constructor (before this code runs) and caches it by name,
+  // so re-registering those exact names doesn't override the cached instance.
+  doc.registerFont("Body", require.resolve("dejavu-fonts-ttf/ttf/DejaVuSans.ttf"));
+  doc.registerFont("Bold", require.resolve("dejavu-fonts-ttf/ttf/DejaVuSans-Bold.ttf"));
+  doc.font("Body");
   const stream = fs.createWriteStream(filePath);
   doc.pipe(stream);
-  renderInvoicePdf(doc, order, invoiceNumber);
+  renderInvoicePdf(doc, order, invoiceNumber, sequence);
   doc.end();
 
   await new Promise<void>((resolve, reject) => {

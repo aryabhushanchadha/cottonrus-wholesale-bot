@@ -14,9 +14,11 @@ customersRouter.get("/me", requireTelegramAuth, async (req, res, next) => {
 
 customersRouter.patch("/me", requireTelegramAuth, async (req, res, next) => {
   try {
-    const { companyName, phone, email, fullName } = req.body ?? {};
+    const { companyName, inn, address, phone, email, fullName } = req.body ?? {};
     const updated = await updateCustomerProfile(req.customer!.id, {
       companyName,
+      inn,
+      address,
       phone,
       email,
       fullName,
