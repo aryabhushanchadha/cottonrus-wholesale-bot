@@ -69,7 +69,6 @@ model Product {
   gsm         Int      @default(220) // fabric weight (180 = classic, 200 = oversize)
   fitEn       String   @default("Regular / Classic Fit")
   fitRu       String   @default("Классический крой")
-  images      String[] @default([]) // product photo URLs/paths shown on the catalog page
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
 
@@ -88,6 +87,7 @@ model ProductVariant {
   currency   String  @default("RUB")
   minOrderQty Int    @default(10) // wholesale minimum per SKU
   stockQty   Int     @default(0)
+  images     String[] @default([]) // photo paths for this color, shown on the catalog page
 
   orderItems OrderItem[]
 

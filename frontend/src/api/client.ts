@@ -29,6 +29,7 @@ export interface ProductVariant {
   currency: string;
   minOrderQty: number;
   stockQty: number;
+  images: string[];
 }
 
 export interface Product {
@@ -42,7 +43,6 @@ export interface Product {
   gsm: number;
   fitEn: string;
   fitRu: string;
-  images: string[];
   variants: ProductVariant[];
 }
 

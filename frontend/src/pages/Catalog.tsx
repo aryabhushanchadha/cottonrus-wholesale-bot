@@ -38,9 +38,9 @@ function ProductCard({ product }: { product: Product }) {
 
   return (
     <div className="product-card">
-      {product.images.length > 0 && (
+      {variant && variant.images.length > 0 && (
         <div className="product-gallery">
-          {product.images.map((src) => (
+          {variant.images.map((src) => (
             <img key={src} src={src} alt={name} className="product-photo" />
           ))}
         </div>

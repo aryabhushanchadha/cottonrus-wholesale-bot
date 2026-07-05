@@ -25,7 +25,17 @@ const PRODUCTS = [
     fitEn: "Regular Fit",
     fitRu: "Классический крой",
     priceMinor: 18000, // 180 RUB excl. VAT
-    images: [] as string[],
+    imagesByColor: {
+      BLACK: [
+        "/images/180gsm-black-1.jpg",
+        "/images/180gsm-black-2.jpg",
+        "/images/180gsm-black-3.jpg",
+        "/images/180gsm-black-4.jpg",
+        "/images/180gsm-black-5.jpg",
+        "/images/180gsm-black-6.jpg",
+      ],
+      WHITE: ["/images/180gsm-white-1.jpg", "/images/180gsm-white-2.jpg", "/images/180gsm-white-3.jpg"],
+    } as Record<Color, string[]>,
   },
   {
     slug: "cotton-tee-200gsm-oversize",
@@ -45,7 +55,10 @@ const PRODUCTS = [
     fitEn: "Oversized Fit",
     fitRu: "Оверсайз крой",
     priceMinor: 25000, // 250 RUB excl. VAT
-    images: [] as string[],
+    imagesByColor: {
+      BLACK: ["/images/200gsm-black-1.jpg", "/images/200gsm-black-2.jpg", "/images/200gsm-black-3.jpg"],
+      WHITE: ["/images/200gsm-white-1.jpg", "/images/200gsm-white-2.jpg", "/images/200gsm-white-3.jpg"],
+    } as Record<Color, string[]>,
   },
 ];
 
@@ -61,7 +74,6 @@ async function main() {
         gsm: spec.gsm,
         fitEn: spec.fitEn,
         fitRu: spec.fitRu,
-        images: spec.images,
       },
       create: {
         slug: spec.slug,
@@ -73,7 +85,6 @@ async function main() {
         gsm: spec.gsm,
         fitEn: spec.fitEn,
         fitRu: spec.fitRu,
-        images: spec.images,
         isActive: true,
       },
     });
@@ -81,9 +92,10 @@ async function main() {
     for (const size of SIZES) {
       for (const color of COLORS) {
         const sku = `${spec.gsm}-${size}-${color.slice(0, 2)}`;
+        const images = spec.imagesByColor[color];
         await prisma.productVariant.upsert({
           where: { productId_size_color: { productId: product.id, size, color } },
-          update: { priceMinor: spec.priceMinor, currency: "RUB" },
+          update: { priceMinor: spec.priceMinor, currency: "RUB", images },
           create: {
             productId: product.id,
             size,
@@ -93,6 +105,7 @@ async function main() {
             currency: "RUB",
             minOrderQty: 10,
             stockQty: 500,
+            images,
           },
         });
       }
