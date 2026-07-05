@@ -1,7 +1,7 @@
 export const en = {
   welcome:
     "Welcome to Premium Cotton Wholesale!\n\nYour Customer ID: {{customerCode}}\n\nBrowse our catalog of 100% cotton premium t-shirts (sizes 46-56, Black & White) and place a wholesale order right inside Telegram.",
-  openCatalog: "Open Catalog",
+  openCatalog: "Open Shop",
   myOrders: "My Orders",
   switchLanguage: "Русский",
   help:

@@ -10,6 +10,9 @@ export function BottomNav() {
   return (
     <nav className="bottom-nav">
       <NavLink to="/" end className={({ isActive }) => (isActive ? "active" : "")}>
+        {t.nav.home}
+      </NavLink>
+      <NavLink to="/catalog" className={({ isActive }) => (isActive ? "active" : "")}>
         {t.nav.catalog}
       </NavLink>
       <NavLink to="/cart" className={({ isActive }) => (isActive ? "active" : "")}>

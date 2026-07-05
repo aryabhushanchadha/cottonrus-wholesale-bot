@@ -3,7 +3,7 @@ import type { TranslationShape } from "./en";
 export const ru: TranslationShape = {
   welcome:
     "Добро пожаловать в Premium Cotton Wholesale!\n\nВаш ID клиента: {{customerCode}}\n\nОзнакомьтесь с каталогом премиальных футболок из 100% хлопка (размеры 46-56, чёрный и белый) и оформите оптовый заказ прямо в Telegram.",
-  openCatalog: "Открыть каталог",
+  openCatalog: "Открыть магазин",
   myOrders: "Мои заказы",
   switchLanguage: "English",
   help:

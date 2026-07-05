@@ -1,6 +1,30 @@
 export const en = {
   appName: "Premium Cotton Wholesale",
-  nav: { catalog: "Catalog", cart: "Cart", orders: "Orders", profile: "Profile" },
+  nav: { home: "Home", catalog: "Catalog", cart: "Cart", orders: "Orders", profile: "Profile" },
+  home: {
+    companyName: 'OOO "BLUE CROWN"',
+    tagline: "Wholesale supplier of premium cotton t-shirts",
+    intro:
+      "We manufacture and supply 100% cotton t-shirts directly to marketplace sellers and retail " +
+      "chains across Russia. Working straight from the factory floor — no middlemen — lets us hold " +
+      "some of the most competitive wholesale prices on the market without cutting corners on quality.",
+    promiseTitle: "Our promise to every buyer",
+    qualityTitle: "Guaranteed quality",
+    qualityText:
+      "Every batch is quality-checked before shipping. 100% cotton, 180/200 GSM, reinforced seams — " +
+      "stock that keeps your marketplace return rate low.",
+    priceTitle: "Best price",
+    priceText:
+      "Direct factory supply with no intermediaries means consistently competitive wholesale pricing, " +
+      "without compromising on fabric or construction.",
+    deliveryTitle: "Fast, reliable delivery",
+    deliveryText:
+      "Orders ship promptly across Russia, and you can track every order's status right inside this bot " +
+      "from confirmation to delivery.",
+    contactTitle: "Company details",
+    inn: "Tax ID (INN)",
+    cta: "Browse the Catalog",
+  },
   catalog: {
     title: "Wholesale Catalog",
     subtitle: "100% Cotton · 180 & 200 GSM Oversize · Sizes 46–56",
