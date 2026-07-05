@@ -4,3 +4,6 @@ dist
 backend/.demo-pgdata
 backend/invoices/*.pdf
 frontend/dist
+*.tsbuildinfo
+backend/dist
+frontend/dist
