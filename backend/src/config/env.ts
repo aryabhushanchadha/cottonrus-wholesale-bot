@@ -37,7 +37,7 @@ export const env = {
     process.env.YOOKASSA_RETURN_URL ??
     (platformUrl ? `${platformUrl}/checkout/success` : "http://localhost:5183/checkout/success"),
 
-  vatRateBps: Number(process.env.VAT_RATE_BPS ?? 2000), // 2000 = 20% (standard Russian VAT)
+  vatRateBps: Number(process.env.VAT_RATE_BPS ?? 2200), // 2200 = 22%
 
   company: {
     name: process.env.COMPANY_NAME ?? 'ООО "БЛЮ КРАУН"',

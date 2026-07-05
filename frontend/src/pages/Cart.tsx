@@ -1,8 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import { useLanguage } from "../i18n/LanguageContext";
-
-const VAT_RATE = 0.2; // must match backend VAT_RATE_BPS; shown here for a live estimate only
+import { VAT_RATE } from "../constants";
 
 function formatPrice(minor: number, currency: string) {
   return `${(minor / 100).toFixed(2)} ${currency}`;
@@ -62,7 +61,9 @@ export function Cart() {
         <span>{formatPrice(subtotalMinor, currency)}</span>
       </div>
       <div className="summary-row">
-        <span>{t.cart.vat} (20%)</span>
+        <span>
+          {t.cart.vat} ({(VAT_RATE * 100).toFixed(0)}%)
+        </span>
         <span>{formatPrice(vatMinor, currency)}</span>
       </div>
       <div className="summary-row total">
