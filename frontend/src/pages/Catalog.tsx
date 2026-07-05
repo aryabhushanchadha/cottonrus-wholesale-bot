@@ -74,6 +74,7 @@ function ProductCard({ product }: { product: Product }) {
           </button>
         ))}
       </div>
+      <SizeChartButton gsm={product.gsm} />
 
       <div className="muted" style={{ marginBottom: 6 }}>
         {t.catalog.selectColor}
@@ -143,7 +144,6 @@ export function Catalog() {
     <div className="content">
       <h2 style={{ margin: "0 0 4px" }}>{t.catalog.title}</h2>
       <p className="subtitle">{t.catalog.subtitle}</p>
-      <SizeChartButton />
       {loading && <p className="muted">Loading…</p>}
       {error && <p className="muted">{error}</p>}
       {products.map((p) => (
